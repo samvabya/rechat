@@ -23,7 +23,7 @@ class ChatModel {
     this.hasChatted = false,
   });
 
-  factory ChatModel.fromMap(Map<String, dynamic> map) {
+  factory ChatModel.fromMap(Map<String, dynamic> map, bool? hasChatted) {
     return ChatModel(
       id: map['id'] ?? '',
       name: map['name'] ?? 'User',
@@ -34,7 +34,7 @@ class ChatModel {
       isOnline: map['is_online'] ?? false,
       isTyping: false,
       userId: map['id'] ?? '',
-      hasChatted: map['has_chatted'] ?? false,
+      hasChatted: hasChatted ?? false,
     );
   }
 

@@ -67,49 +67,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Add app bar manually
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Image.asset('assets/rechat.png', width: 100),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(FeatherIcons.search),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(FeatherIcons.moreVertical),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfileScreen(),
-                          ));
-                    },
-                  ),
-                ],
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Image.asset('assets/rechat.png', width: 100),
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        actions: [
+          IconButton(
+            icon: const Icon(FeatherIcons.search),
+            onPressed: () {},
           ),
-        ),
-        _buildSearchBar(),
-        _buildStoriesSection(),
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _filteredContacts.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: _loadContacts,
-                      child: _buildContactsList(),
-                    ),
-        ),
-      ],
+          IconButton(
+            icon: const Icon(FeatherIcons.moreVertical),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          // _buildStoriesSection(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredContacts.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        onRefresh: _loadContacts,
+                        child: _buildContactsList(),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../models/chat_model.dart';
@@ -11,13 +12,15 @@ class SupabaseService {
     try {
       final response = await supabase.from('users').select('*');
 
-      return response.map((data) => ChatModel.fromMap(data)).toList();
+      final box = Hive.box('chats');
+      List<String> chatted = box.values.cast<String>().toList();
+
+      return response.map((data) => ChatModel.fromMap(data, chatted.contains(data['id']))).toList();
     } catch (e) {
       debugPrint('Error getting chat contacts: $e');
       return [];
     }
   }
-
   // Get chat messages between two users
   static Future<List<MessageModel>> getChatMessages(String otherUserId) async {
     try {
