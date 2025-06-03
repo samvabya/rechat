@@ -32,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final contacts = await SupabaseService.getChatContacts();
+      final supabaseService = SupabaseService();
+      final contacts = await supabaseService.getChatContacts();
       setState(() {
         _allContacts = contacts;
         _filteredContacts = contacts;
@@ -45,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _showErrorSnackBar('Failed to load contacts');
     }
   }
-
   void _filterContacts() {
     final query = _searchController.text.toLowerCase();
     setState(() {

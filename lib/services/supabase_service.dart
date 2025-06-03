@@ -1,26 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../models/chat_model.dart';
 
+  class ChatSummary {
+  final String userId;
+  final String lastMessage;
+  final DateTime timestamp;
+
+  ChatSummary({
+    required this.userId,
+    required this.lastMessage,
+    required this.timestamp,
+  });
+}
 class SupabaseService {
   static final SupabaseClient _supabase = supabase;
 
   // Get all users
-  static Future<List<ChatModel>> getChatContacts() async {
+  Future<List<ChatModel>> getChatContacts() async {
     try {
       final response = await supabase.from('users').select('*');
 
-      final box = Hive.box('chats');
-      List<String> chatted = box.values.cast<String>().toList();
+      List<ChatSummary> chattedUsers = await getUniqueInteractedUserIds(supabase.auth.currentUser?.id ?? '');
 
-      return response.map((data) => ChatModel.fromMap(data, chatted.contains(data['id']))).toList();
+      return response.map((data) => ChatModel.fromMap(data, chattedUsers.map((e) => e.userId).toList().contains(data['id']), chattedUsers.where((element) => element.userId==data['id']).first.lastMessage)).toList();
     } catch (e) {
       debugPrint('Error getting chat contacts: $e');
       return [];
     }
   }
+
+Future<List<ChatSummary>> getUniqueInteractedUserIds(String myId) async {
+  final supabase = Supabase.instance.client;
+
+  final response = await supabase
+      .from('chats')
+      .select('sender_id, receiver_id, message, created_at')
+      .or('sender_id.eq.$myId,receiver_id.eq.$myId')
+      .order('created_at', ascending: false); // newest first
+
+  if (response.isEmpty) {
+    return [];
+  }
+
+  final Map<String, ChatSummary> latestMessages = {};
+
+  for (final chat in response) {
+    final senderId = chat['sender_id'] as String;
+    final receiverId = chat['receiver_id'] as String;
+    final message = chat['message'] as String;
+    final createdAt = DateTime.parse(chat['created_at']);
+
+    // Get the "other" user in the chat
+    final otherUserId = senderId == myId ? receiverId : senderId;
+
+    // If this user not seen yet, store their latest message
+    if (!latestMessages.containsKey(otherUserId)) {
+      latestMessages[otherUserId] = ChatSummary(
+        userId: otherUserId,
+        lastMessage: message,
+        timestamp: createdAt,
+      );
+    }
+  }
+
+  return latestMessages.values.toList();
+}
   // Get chat messages between two users
   static Future<List<MessageModel>> getChatMessages(String otherUserId) async {
     try {
@@ -155,5 +201,5 @@ class SupabaseService {
 }
 
 String formattedUrl(String url) {
-  return 'https://dzndxdypnvjafxmindwj.supabase.co/storage/v1/object/public/uploads/${url}';
+  return 'https://dzndxdypnvjafxmindwj.supabase.co/storage/v1/object/public/uploads/$url';
 }

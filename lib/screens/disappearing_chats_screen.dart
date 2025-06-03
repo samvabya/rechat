@@ -36,33 +36,18 @@ class _DisappearingChatsScreenState extends State<DisappearingChatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: true,
+        title: Text(
+          'Disappearing Chats',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Disappearing',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(FeatherIcons.info),
-                        onPressed: () => _showDisappearingInfo(context),
-                      ),
-                      IconButton(
-                        icon: const Icon(FeatherIcons.moreVertical),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             _buildInfoBanner(),
             _buildSearchBar(),
             Expanded(
@@ -244,9 +229,7 @@ class _DisappearingChatsScreenState extends State<DisappearingChatsScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _showMoreOptions(BuildContext context) {
+    // More options implementation
   }
 }

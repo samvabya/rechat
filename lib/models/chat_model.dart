@@ -23,11 +23,11 @@ class ChatModel {
     this.hasChatted = false,
   });
 
-  factory ChatModel.fromMap(Map<String, dynamic> map, bool? hasChatted) {
+  factory ChatModel.fromMap(Map<String, dynamic> map, bool? hasChatted, String? lastMessage) {
     return ChatModel(
       id: map['id'] ?? '',
       name: map['name'] ?? 'User',
-      lastMessage: map['last_message'] ?? '',
+      lastMessage: lastMessage ?? '',
       time: formatTimeAgo(map['last_message_time']),
       avatarUrl: map['image'] ?? '',
       unreadCount: (map['unread_count'] ?? 0).toInt(),

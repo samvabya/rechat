@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:rechat/screens/auth_screen.dart';
+import 'package:rechat/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
@@ -14,6 +15,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  String _imageUrl = '';
+  String _name = '';
   bool _isLoading = false;
 
   @override
@@ -24,10 +27,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadUserData() {
     final user = supabase.auth.currentUser;
-    if (user != null) {
-      _emailController.text = user.email ?? '';
-      _nameController.text = user.userMetadata?['display_name'] ?? '';
-    }
+    supabase.from('users').select().eq('id', user?.id ?? '').single().then(
+      (value) {
+        if (user != null) {
+          _emailController.text = value['email'] ?? '';
+          _nameController.text = value['name'] ?? '';
+          _imageUrl = value['image_url'] ?? '';
+          _name = value['name'] ?? '';
+          setState(() {});
+        }
+      },
+    );
   }
 
   Future<void> _updateProfile() async {
@@ -36,13 +46,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      await supabase.auth.updateUser(
-        UserAttributes(
-          data: {
-            'display_name': _nameController.text.trim(),
-          },
-        ),
-      );
+      final response = await supabase.from('users').select('name');
+      List<String> names =
+          response.map((item) => item['name'].toString()).toList();
+
+      if (names.contains(_nameController.text)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Name already exists. Please choose a different name.',
+                  style: TextStyle(color: Colors.white)),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      await supabase.from('users').update({
+        'name': _nameController.text,
+      }).eq('id', supabase.auth.currentUser!.id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _isLoading = false;
       });
+      _loadUserData();
     }
   }
 
@@ -111,34 +136,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileHeader(User? user) {
     return Column(
       children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
+        if (_imageUrl.isEmpty)
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
               ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            child: const Icon(
+              FeatherIcons.user,
+              size: 60,
+              color: Colors.white,
+            ),
+          )
+        else
+          Image.network(
+            formattedUrl(_imageUrl),
+            width: 120,
+            height: 120,
           ),
-          child: const Icon(
-            FeatherIcons.user,
-            size: 60,
-            color: Colors.white,
-          ),
-        ),
         const SizedBox(height: 16),
         Text(
-          user?.userMetadata?['display_name'] ?? 'User',
+          _name.isEmpty ? 'User' : _name,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
